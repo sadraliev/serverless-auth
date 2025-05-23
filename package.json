@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node build.js"
+    "build": "node esbuild.config.js"
   },
   "keywords": [],
   "author": "",

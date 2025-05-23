@@ -6,15 +6,14 @@ const handlersDir = path.resolve(__dirname, "src", "handlers");
 const outDir = path.resolve(__dirname, "dist");
 
 async function build() {
-  const files = fs.readdirSync(handlersDir).filter((f) => f.endsWith(".ts"));
+  const files = fs.readdirSync(handlersDir).filter((f) => f.endsWith("handler.ts"));
 
   for (const file of files) {
-    const name = path.basename(file, ".ts");
+    const name = path.basename(file, "handler.ts");
     const handlerOutDir = path.resolve(outDir, name);
 
     console.log(`🔨 Building handler: ${name}`);
 
-    // Создаем папку назначения, если не существует
     if (!fs.existsSync(handlerOutDir)) {
       fs.mkdirSync(handlerOutDir, { recursive: true });
     }
