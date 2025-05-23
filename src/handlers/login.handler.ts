@@ -1,30 +1,31 @@
-import { APIGatewayProxyEvent } from "aws-lambda";
-import * as AWS from "aws-sdk";
 import * as jwt from "jsonwebtoken";
 import { verifyPassword } from "../utils/password";
-import { USERS_TABLE, JWT_SECRET, JWT_EXPIRY } from "../config/env";
-import dynamo from "../utils/fake.db";
+import { JWT_SECRET, JWT_EXPIRY } from "../config/env";
+import { getUserByEmail } from "../repositories/users.repository";
 
 type LoginEvent = {
-  username: string;
+  email: string;
   password: string;
 };
 
 export const handler = async (event: LoginEvent) => {
-  const { username, password } = event;
-  if (!username || !password) {
+  const { email, password } = event;
+  if (!email || !password) {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: "Username and password are required" }),
     };
   }
 
-  const user = await dynamo.get({
-    TableName: USERS_TABLE,
-    Key: { username },
-  });
+  const user = await getUserByEmail(email);
+  if (!user) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: "User not found" }),
+    };
+  }
 
-  const stored = user.Item?.password;
+  const stored = user.password;
 
   if (!stored || !(await verifyPassword(password, stored))) {
     return {
@@ -33,7 +34,7 @@ export const handler = async (event: LoginEvent) => {
     };
   }
 
-  const token = jwt.sign({ username }, JWT_SECRET, {
+  const token = jwt.sign({ email }, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,
   });
 

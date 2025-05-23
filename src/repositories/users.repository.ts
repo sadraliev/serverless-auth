@@ -11,32 +11,16 @@ const USERS_TABLE = "users";
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 
-export interface User {
+type User = {
   email: string;
   password: string;
-}
+};
+type UserOutput = User & {
+  createdAt: string;
+  updatedAt: string;
+};
 
-export interface UserResponse {
-  ok: boolean;
-  message: string;
-  statusCode: number;
-  user?: User;
-  pagintation?: {
-    lastKey: string;
-  };
-}
-
-export const createUser = async (user: User): Promise<UserResponse> => {
-  // Check if user already exists
-  const existingUser = await getUserByEmail(user.email);
-  if (existingUser.ok) {
-    return {
-      ok: false,
-      message: "User already exists",
-      statusCode: 409,
-    };
-  }
-
+export const createUser = async (user: User) => {
   const hashedPassword = await hashPassword(user.password);
   const newUser = { ...user, password: hashedPassword };
 
@@ -47,12 +31,7 @@ export const createUser = async (user: User): Promise<UserResponse> => {
     })
   );
 
-  return {
-    ok: true,
-    message: "User created successfully",
-    statusCode: 201,
-    user: newUser,
-  };
+  return;
 };
 
 export async function getUsersPage(limit = 10, lastKey?: Record<string, any>) {
@@ -75,12 +54,12 @@ export async function getUsersPage(limit = 10, lastKey?: Record<string, any>) {
   };
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(email: string) {
   await client.send(
     new DeleteItemCommand({
       TableName: "Users",
       Key: {
-        userId: { S: userId },
+        userId: { S: email },
       },
     })
   );
@@ -91,32 +70,7 @@ export async function deleteUser(userId: string) {
     statusCode: 200,
   };
 }
-export async function getUserById(userId: string) {
-  const result = await client.send(
-    new ScanCommand({
-      TableName: "Users",
-      FilterExpression: "userId = :userId",
-      ExpressionAttributeValues: {
-        ":userId": { S: userId },
-      },
-    })
-  );
 
-  if (!result.Items || result.Items.length === 0) {
-    return {
-      ok: false,
-      message: "User not found",
-      statusCode: 404,
-    };
-  }
-
-  return {
-    ok: true,
-    message: "User found",
-    statusCode: 200,
-    user: result.Items[0],
-  };
-}
 export async function getUserByEmail(email: string) {
   const result = await client.send(
     new ScanCommand({
@@ -128,46 +82,13 @@ export async function getUserByEmail(email: string) {
     })
   );
   if (!result.Items || result.Items.length === 0) {
-    return {
-      ok: false,
-      message: "User not found",
-      statusCode: 404,
-    };
+    return;
   }
-
-  return {
-    ok: true,
-    message: "User found",
-    statusCode: 200,
-    user: result.Items[0],
+  const user: UserOutput = {
+    email: result.Items[0].email.S as string,
+    password: result.Items[0].password.S as string,
+    createdAt: result.Items[0].createdAt.S as string,
+    updatedAt: result.Items[0].updatedAt.S as string,
   };
+  return user;
 }
-
-export const updateUserByEmail = async (
-  email: string,
-  user: Partial<User>
-): Promise<UserResponse> => {
-  const existingUser = await getUserByEmail(email);
-  if (!existingUser) {
-    return {
-      ok: false,
-      message: "User not found",
-      statusCode: 404,
-    };
-  }
-
-  const updatedUser = { ...existingUser, ...user };
-
-  await dynamo.send(
-    new PutCommand({
-      TableName: USERS_TABLE,
-      Item: updatedUser,
-    })
-  );
-
-  return {
-    ok: true,
-    message: "User updated successfully",
-    statusCode: 200,
-  };
-};
