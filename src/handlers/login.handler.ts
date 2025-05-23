@@ -1,5 +1,5 @@
 import * as jwt from "jsonwebtoken";
-import { verifyPassword } from "../utils/password";
+import { verifyPassword } from "../utils/main";
 import { JWT_SECRET, JWT_EXPIRY } from "../config/env";
 import { getUserByEmail } from "../repositories/users.repository";
 

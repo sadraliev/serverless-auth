@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { hashPassword } from "../utils/password";
+import { generateUniqueId, hashPassword } from "../utils/main";
 import {
   DeleteItemCommand,
   DynamoDBClient,
@@ -22,7 +22,13 @@ type UserOutput = User & {
 
 export const createUser = async (user: User) => {
   const hashedPassword = await hashPassword(user.password);
-  const newUser = { ...user, password: hashedPassword };
+  const newUser = {
+    ...user,
+    password: hashedPassword,
+    userId: generateUniqueId(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
   await dynamo.send(
     new PutCommand({

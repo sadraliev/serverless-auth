@@ -1,4 +1,4 @@
-import { randomBytes, scrypt } from "node:crypto";
+import { randomBytes, scrypt, randomUUID } from "node:crypto";
 import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
@@ -22,4 +22,8 @@ export async function verifyPassword(
   const [salt, key] = storedHash.split(":");
   const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
   return key === derivedKey.toString("hex");
+}
+
+export function generateUniqueId(): string {
+  return randomUUID();
 }
