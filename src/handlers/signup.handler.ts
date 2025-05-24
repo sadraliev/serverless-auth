@@ -31,6 +31,7 @@ export const handler = async (event: SignupEvent) => {
       body: JSON.stringify({ message: "User created successfully" }),
     };
   } catch (err) {
+    console.error("Error creating user:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Error creating user" }),

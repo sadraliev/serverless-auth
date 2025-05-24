@@ -7,7 +7,7 @@ import {
   ScanCommandInput,
 } from "@aws-sdk/client-dynamodb";
 
-const USERS_TABLE = "users";
+const USERS_TABLE = "Users";
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 
@@ -63,7 +63,7 @@ export async function getUsersPage(limit = 10, lastKey?: Record<string, any>) {
 export async function deleteUser(email: string) {
   await client.send(
     new DeleteItemCommand({
-      TableName: "Users",
+      TableName: USERS_TABLE,
       Key: {
         userId: { S: email },
       },
@@ -80,7 +80,7 @@ export async function deleteUser(email: string) {
 export async function getUserByEmail(email: string) {
   const result = await client.send(
     new ScanCommand({
-      TableName: "Users",
+      TableName: USERS_TABLE,
       FilterExpression: "email = :email",
       ExpressionAttributeValues: {
         ":email": { S: email },
