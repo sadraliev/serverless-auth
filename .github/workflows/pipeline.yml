@@ -1,0 +1,91 @@
+name: "CI/CD Pipeline"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: "20.15.0"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript handlers
+        run: npm run build
+
+      # - name: Create Lambda layer
+      #   run: |
+      #     mkdir -p layer/nodejs
+      #     cp package.json layer/nodejs/
+      #     cd layer/nodejs
+      #     npm ci --production
+      #     cd ../..
+      #     zip -r lambda-layer.zip layer/
+
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      # - name: Create or update Lambda layer
+      #   run: |
+      #     LAYER_NAME="auth-serverless-dependencies"
+      #     LAYER_VERSION=$(aws lambda publish-layer-version \
+      #       --layer-name $LAYER_NAME \
+      #       --description "Dependencies for auth-serverless functions" \
+      #       --zip-file fileb://lambda-layer.zip \
+      #       --compatible-runtimes nodejs20.x \
+      #       --query 'Version' \
+      #       --output text)
+      #     echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
+      #     echo "LAYER_ARN=arn:aws:lambda:$AWS_REGION:${{ secrets.AWS_ACCOUNT_ID }}:layer:$LAYER_NAME:$LAYER_VERSION" >> $GITHUB_ENV
+
+      # - name: Deploy Lambda functions
+      #   run: |
+      #     bash infra/deploy.sh
+
+      # - name: Cleanup build artifacts
+      #   run: |
+      #     rm -rf dist/
+      #     rm -rf layer/
+      #     rm -f *.zip
