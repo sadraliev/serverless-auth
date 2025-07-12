@@ -31,8 +31,6 @@ jobs:
 
       - name: Dependencies weights
         run: |
-          echo "Dist size:"
-          du -sh dist/
           echo "Node modules size:"
           du -sh node_modules/
 
