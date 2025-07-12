@@ -51,6 +51,13 @@ jobs:
       - name: Build TypeScript handlers
         run: npm run build
 
+      - name: Dependencies weights
+        run: |
+          echo "Dist size:"
+          du -sh dist/
+          echo "Node modules size:"
+          du -sh node_modules/
+
       # - name: Create Lambda layer
       #   run: |
       #     mkdir -p layer/nodejs
